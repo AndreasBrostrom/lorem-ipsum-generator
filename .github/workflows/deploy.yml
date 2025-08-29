@@ -1,0 +1,40 @@
+name: Deploy
+run-name: Deploying ${{ github.event.head_commit.message }}
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  main:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Build
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install -r requirements.txt
+
+          mkdir -p build
+          cp -R ./src ./build/.
+          cp -R ./venv ./build/.
+      - name: Deploy
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          source: './build/*'
+          target: ~/www/loremipsum.brostrom.online/public
+          rm: true
+          strip_components: 1
