@@ -13,14 +13,7 @@
 	pip install -r requirements.txt
 	```
 
-3. (Optional) Prepare a build directory:
-	```bash
-	mkdir build
-	cp -R ./src ./build/.
-	cp -R ./venv ./build/.
-	```
-
-4. For production, use Gunicorn:
+3. For production, use Gunicorn:
 	```bash
 	source venv/bin/activate
 	gunicorn --bind 0.0.0.0:8000 src.main:app
