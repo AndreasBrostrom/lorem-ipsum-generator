@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>text generation api</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header>
+    <h1 id="site-title"></h1>
+    <p>text generation api</p>
+  </header>
+
+  <main>
+    <!-- Mode tabs -->
+    <div class="mode-tabs" role="tablist" aria-label="Generator mode">
+      <button class="mode-tab active" id="tab-lorem" role="tab" aria-selected="true" aria-controls="panel-lorem">
+        Lorem Ipsum
+      </button>
+      <button class="mode-tab" id="tab-nonsense" role="tab" aria-selected="false" aria-controls="panel-nonsense">
+        Nonsense
+      </button>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings" id="settings">
+      <!-- Lorem Ipsum panel -->
+      <div id="panel-lorem" role="tabpanel" aria-labelledby="tab-lorem">
+        <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field">
+            <label for="lorem-type">Type</label>
+            <select id="lorem-type">
+              <option value="sentences">Sentences</option>
+              <option value="words">Words</option>
+              <option value="paragraphs">Paragraphs</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="lorem-count">Count</label>
+            <input type="number" id="lorem-count" value="3" min="1" max="100" />
+          </div>
+        </div>
+        <div class="field field-check">
+          <label class="check-label" for="lorem-classic">
+            <input type="checkbox" id="lorem-classic" />
+            Skip classic opening
+          </label>
+        </div>
+      </div>
+
+      <!-- Nonsense panel -->
+      <div id="panel-nonsense" role="tabpanel" aria-labelledby="tab-nonsense" hidden>
+        <div style="display:flex;gap:1.25rem;flex-wrap:wrap;align-items:flex-end;">
+          <div class="field">
+            <label for="nonsense-type">Type</label>
+            <select id="nonsense-type">
+              <option value="sentences">Sentences</option>
+              <option value="words">Words</option>
+              <option value="paragraphs">Paragraphs</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="nonsense-count">Count</label>
+            <input type="number" id="nonsense-count" value="3" min="1" max="100" />
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-generate" id="btn-generate">Generate</button>
+    </div>
+
+    <!-- Output area -->
+    <div class="output-wrapper">
+      <textarea id="output" readonly placeholder="Generated text will appear here…" spellcheck="false"></textarea>
+
+      <div class="actions">
+        <button class="btn-action" id="btn-copy">Copy</button>
+        <button class="btn-action" id="btn-show-api">Show API endpoint</button>
+      </div>
+
+      <!-- API endpoint panel -->
+      <div id="api-panel" aria-live="polite">
+        <span class="panel-label">API endpoint</span>
+        <div class="api-url-row">
+          <div id="api-url-display" title="Click to select"></div>
+          <button class="btn-copy-url" id="btn-copy-url">Copy URL</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>
+      Plain text by default &mdash; add <code>Accept: application/json</code> for JSON &mdash;
+      <a href="/api">/api</a> for endpoint listing
+    </p>
+    <p>
+      <a href="https://github.com/AndreasBrostrom/lorem-ipsum-generator" target="_blank" rel="noopener noreferrer">github.com/AndreasBrostrom/lorem-ipsum-generator</a>
+    </p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
