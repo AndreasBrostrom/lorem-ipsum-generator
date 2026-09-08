@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { getWords, getSentences, getParagraphs } from './lorem.js';
@@ -22,15 +23,26 @@ const PORT = process.env.PORT ?? 3000;
 app.use(cors());
 app.use(express.static(join(__dirname, 'public')));
 
-function clampCount(raw) {
+const limiter = rateLimit({
+  windowMs: (process.env.RATE_LIMIT_WINDOW_MINUTES ?? 15) * 60 * 1000,
+  limit: process.env.RATE_LIMIT_MAX ?? 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(['/lorem', '/nonsense'], limiter);
+
+const MAX_WORDS = 500;
+const MAX_SENTENCES = 200;
+const MAX_PARAGRAPHS = 50;
+
+function clampCount(raw, max) {
   const n = parseInt(raw, 10);
   if (isNaN(n)) return 1;
-  return Math.max(1, Math.min(n, 100));
+  return Math.max(1, Math.min(n, max));
 }
 
 function isClassic(req) {
-  if (req.query.skipClassic !== undefined) return false;
-  return true;
+  return req.query.classic !== 'false';
 }
 
 function respond(req, res, text) {
@@ -56,35 +68,35 @@ app.get('/nonsense', (req, res) => {
 
 // Lorem Ipsum routes
 app.get('/lorem/words/:count', (req, res) => {
-  const n = clampCount(req.params.count);
+  const n = clampCount(req.params.count, MAX_WORDS);
   respond(req, res, getWords(n));
 });
 
 app.get('/lorem/sentences/:count', (req, res) => {
-  const n = clampCount(req.params.count);
+  const n = clampCount(req.params.count, MAX_SENTENCES);
   const classic = isClassic(req);
   respond(req, res, getSentences(n, classic));
 });
 
 app.get('/lorem/paragraphs/:count', (req, res) => {
-  const n = clampCount(req.params.count);
+  const n = clampCount(req.params.count, MAX_PARAGRAPHS);
   const classic = isClassic(req);
   respond(req, res, getParagraphs(n, classic));
 });
 
 // Nonsense routes
 app.get('/nonsense/words/:count', (req, res) => {
-  const n = clampCount(req.params.count);
+  const n = clampCount(req.params.count, MAX_WORDS);
   respond(req, res, getNonsenseWords(n));
 });
 
 app.get('/nonsense/sentences/:count', (req, res) => {
-  const n = clampCount(req.params.count);
+  const n = clampCount(req.params.count, MAX_SENTENCES);
   respond(req, res, getNonsenseSentences(n));
 });
 
 app.get('/nonsense/paragraphs/:count', (req, res) => {
-  const n = clampCount(req.params.count);
+  const n = clampCount(req.params.count, MAX_PARAGRAPHS);
   respond(req, res, getNonsenseParagraphs(n));
 });
 
@@ -102,41 +114,37 @@ app.get('/api', (req, res) => {
         method: 'GET',
         path: '/nonsense',
         description:
-          'Returns 3 nonsense sentences (default shortcut)',
+          'Returns 3 nonsense paragraphs (default shortcut)',
       },
       {
         method: 'GET',
         path: '/lorem/words/:count',
-        description: 'Returns :count lorem ipsum words',
+        description: `Returns :count lorem ipsum words (max ${MAX_WORDS})`,
       },
       {
         method: 'GET',
         path: '/lorem/sentences/:count',
-        description: 'Returns :count lorem ipsum sentences',
+        description: `Returns :count lorem ipsum sentences (max ${MAX_SENTENCES})`,
       },
       {
         method: 'GET',
         path: '/lorem/paragraphs/:count',
-        description:
-          'Returns :count lorem ipsum paragraphs (3-6 sentences each)',
+        description: `Returns :count lorem ipsum paragraphs (3-6 sentences each, max ${MAX_PARAGRAPHS})`,
       },
       {
         method: 'GET',
         path: '/nonsense/words/:count',
-        description:
-          'Returns :count algorithmically-generated nonsense words',
+        description: `Returns :count algorithmically-generated nonsense words (max ${MAX_WORDS})`,
       },
       {
         method: 'GET',
         path: '/nonsense/sentences/:count',
-        description:
-          'Returns :count nonsense sentences with real grammar structure',
+        description: `Returns :count nonsense sentences with real grammar structure (max ${MAX_SENTENCES})`,
       },
       {
         method: 'GET',
         path: '/nonsense/paragraphs/:count',
-        description:
-          'Returns :count nonsense paragraphs (3-6 sentences each)',
+        description: `Returns :count nonsense paragraphs (3-6 sentences each, max ${MAX_PARAGRAPHS})`,
       },
       {
         method: 'GET',
@@ -145,8 +153,10 @@ app.get('/api', (req, res) => {
       },
     ],
     notes: [
-      'count is capped at 100 (min 1)',
+      `count is capped per type (min 1): words max ${MAX_WORDS}, sentences max ${MAX_SENTENCES}, paragraphs max ${MAX_PARAGRAPHS}`,
       'Add Accept: application/json header to receive a JSON response instead of plain text',
+      'classic=false on /lorem, /lorem/sentences/:count and /lorem/paragraphs/:count skips the traditional opening sentence',
+      `Requests to /lorem/* and /nonsense/* are rate-limited per IP (default ${process.env.RATE_LIMIT_MAX ?? 100} per ${process.env.RATE_LIMIT_WINDOW_MINUTES ?? 15} minutes)`,
     ],
   });
 });
