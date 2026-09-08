@@ -72,7 +72,7 @@
     if (currentMode === 'lorem') {
       const type = loremType.value; // "words" | "sentences" | "paragraphs"
       const count = clamp(parseInt(loremCount.value, 10) || 3);
-      const classicParam = loremClassic.checked ? '?skipClassic' : '';
+      const classicParam = loremClassic.checked ? '?classic=false' : '';
       return `${base}/lorem/${type}/${count}${classicParam}`;
     } else {
       const type = nonsenseType.value; // "words" | "sentences"
@@ -130,13 +130,16 @@
   }
 
   // ── API fetch ──────────────────────────────────────────────────────────────
-  async function generate() {
-    const url = buildUrl();
-    lastUrl = url;
-
+  function refreshApiUrl() {
+    lastUrl = buildUrl();
     if (apiPanelVisible) {
-      apiUrlDisplay.textContent = url;
+      apiUrlDisplay.textContent = lastUrl;
     }
+    return lastUrl;
+  }
+
+  async function generate() {
+    const url = refreshApiUrl();
 
     try {
       const res = await fetch(url);
@@ -195,9 +198,17 @@
 
   btnGenerate.addEventListener('click', generate);
 
-  [loremType, nonsenseType].forEach((el) => el.addEventListener('change', saveState));
-  [loremCount, nonsenseCount].forEach((el) => el.addEventListener('change', saveState));
-  loremClassic.addEventListener('change', saveState);
+  function onSettingChange() {
+    saveState();
+    refreshApiUrl();
+  }
+
+  [loremType, nonsenseType].forEach((el) => el.addEventListener('change', onSettingChange));
+  [loremCount, nonsenseCount].forEach((el) => {
+    el.addEventListener('input', onSettingChange);
+    el.addEventListener('change', onSettingChange);
+  });
+  loremClassic.addEventListener('change', onSettingChange);
 
   // Re-generate on Enter in count inputs
   [loremCount, nonsenseCount].forEach((input) => {

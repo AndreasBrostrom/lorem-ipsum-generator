@@ -20,6 +20,8 @@ const __dirname = dirname(__filename);
 const app = express();
 const PORT = process.env.PORT ?? 3000;
 
+app.set('trust proxy', Number(process.env.TRUST_PROXY_HOPS ?? 1));
+
 app.use(cors());
 app.use(express.static(join(__dirname, 'public')));
 
